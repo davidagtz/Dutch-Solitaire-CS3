@@ -41,7 +41,10 @@ public class Dutch extends JPanel implements MouseMotionListener, MouseListener{
 				// swap(board, i, 12, i, 0);
 				// swap(comp, i, 12, i, 0);
 			}
+			//for a full game
 			swap(board, 0, 4, 0, 13, 50);
+			//for one swap
+			// swap(board, 0, 4, 0, 13, 1);
 		}catch(IOException e){
 			e.printStackTrace();
 			System.exit(0);
@@ -71,7 +74,7 @@ public class Dutch extends JPanel implements MouseMotionListener, MouseListener{
 		}else{
 			int x = 0;
 			int y = 0;
-			// won = true;
+			won = true;
 			for(Card[] row:board){
 				for(Card card:row){
 					if(card!=null&&!card.equals(dragged))
@@ -83,16 +86,16 @@ public class Dutch extends JPanel implements MouseMotionListener, MouseListener{
 					}
 				}
 			}
-			g.setColor(Color.orange);
-			g.setFont(new Font(Font.SANS_SERIF, Font.BOLD,w/2));
-			for(int i = 0;i<comp.length;i++){
-				for(int j=0;j<comp[i].length;j++){
-					if(comp[i][j]!=null)
-						g.drawString(comp[i][j], j*w, i*h+w/2);	
-					else
-						g.drawString("null", j*w, i*h+w/2);	
-				}
-			}
+			// g.setColor(Color.orange);
+			// g.setFont(new Font(Font.SANS_SERIF, Font.BOLD,w/2));
+			// for(int i = 0;i<comp.length;i++){
+			// 	for(int j=0;j<comp[i].length;j++){
+			// 		if(comp[i][j]!=null)
+			// 			g.drawString(comp[i][j], j*w, i*h+w/2);	
+			// 		else
+			// 			g.drawString("null", j*w, i*h+w/2);	
+			// 	}
+			// }
 			if(null!=dragged){
 				g.drawImage(dragged.img, dragged.x, dragged.y, w, h, null);
 			}
@@ -127,8 +130,8 @@ public class Dutch extends JPanel implements MouseMotionListener, MouseListener{
 		debug(dragged);
 		if(dragged!=null&&c<board[0].length-1&&board[r][c]==null){
 			if(hasLeftOrRight(r, c, dragged)){
-				if(dragged.val=='2'){
-					if(board[dragged.r][0]==null)
+				if(dragged.val=='2'&&dragged.c!=0){
+					if(board[dragged.r][0]==null&&board[r][0]==null)
 						swap(board, r, c, dragged.r, dragged.c);
 				}
 				else
