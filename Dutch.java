@@ -17,24 +17,29 @@ public class Dutch extends JPanel implements MouseMotionListener, MouseListener{
 	static final int WIDTH = w*14;
 	static final int HEIGHT = h*4;
 	static char[] suits = {'D','C','H','S'};
-	static char[] values = {'A','2','3','4','5','6','7','8','9','T','J','Q','K'};
-	static Card[][] board = new Card[suits.length][values.length+1];
-	static String[][] comp = new String[suits.length][values.length+1];
+	static String values = "23456789TJQKA";
+	static Card[][] board = new Card[suits.length][values.length()+1];
+	static String[][] comp = new String[suits.length][values.length()+1];
 	static Color back = new Color(0, 153, 0);
 	static Card dragged;
+	static int xoff = -1;
+	static int yoff = -1;
 	static boolean won = false;
 	public Dutch(){
 		try{
 			for(int i=0;i<suits.length;i++){
-				for(int j = 0;j<values.length;j++){
-					String key = String.valueOf(values[j]=='T'?10+"":values[j])+suits[i];
+				for(int j = 1;j<values.length()+1;j++){
+					String key = String.valueOf(values.charAt(j-1)=='T'?10+"":values.charAt(j-1))+suits[i];
 					String p = path+key+".png";
-					board[i][j] = new Card(suits[i],values[j],i,j,ImageIO.read(new File(p)));
+					board[i][j] = new Card(suits[i],values.charAt(j-1),i,j,ImageIO.read(new File(p)));
 					board[i][j].x = j*w;
 					board[i][j].y = i*h;
-					comp[i][j] = key;
+					comp[i][j] = board[i][j].toString();
 				}
-				swap(board, i, 0, i, board[i].length-1);
+				// swap(board, i, 12, i, board[i].length-1);
+				// swap(comp, i, 12, i, board[i].length-1);
+				// swap(board, i, 12, i, 0);
+				// swap(comp, i, 12, i, 0);
 			}
 			swap(board, 0, 4, 0, 13, 50);
 		}catch(IOException e){
@@ -61,11 +66,12 @@ public class Dutch extends JPanel implements MouseMotionListener, MouseListener{
 		if(won){
 			g.setFont(font);
 			int wi = g.getFontMetrics().stringWidth("YOU WON");
+			g.setColor(Color.white);
 			g.drawString("YOU WON", WIDTH/2-wi/2, HEIGHT/2-h/2);
 		}else{
 			int x = 0;
 			int y = 0;
-			boolean hasWon = true;
+			// won = true;
 			for(Card[] row:board){
 				for(Card card:row){
 					if(card!=null&&!card.equals(dragged))
@@ -77,24 +83,37 @@ public class Dutch extends JPanel implements MouseMotionListener, MouseListener{
 					}
 				}
 			}
+			g.setColor(Color.orange);
+			g.setFont(new Font(Font.SANS_SERIF, Font.BOLD,w/2));
+			for(int i = 0;i<comp.length;i++){
+				for(int j=0;j<comp[i].length;j++){
+					if(comp[i][j]!=null)
+						g.drawString(comp[i][j], j*w, i*h+w/2);	
+					else
+						g.drawString("null", j*w, i*h+w/2);	
+				}
+			}
 			if(null!=dragged){
 				g.drawImage(dragged.img, dragged.x, dragged.y, w, h, null);
 			}
-			// search:
-			// for(int i = 0;i<board.length;i++){
-			// 	for(int j = 0;j<board[i].length;i++){
-			// 		debug(comp[i][j]);
-			// 		debug(board[i][j]);
-			// 		if(comp[i][j]==null^board[i][j]==null){
-			// 			hasWon=false;
-			// 			break search;
-			// 		}
-			// 		else if(comp!=null&&!comp[i][j].equals(""+board[i][j].val+board[i][j].suit)){
-			// 			hasWon=false;
-			// 			break search;
-			// 		}
-			// 	}
-			// }
+			search:
+			for(int i = 0;i<board.length;i++){
+				for(int j = 0;j<board[i].length;j++){
+					// debug(comp[i][j]);
+					// debug(board[i][j]);
+					if(comp[i][j]==null^board[i][j]==null){
+						won=false;
+						break search;
+					}
+					else if(comp[i][j]!=null&&board[i][j]!=null&&!comp[i][j].equals(board[i][j].toString())){
+						debug(comp[i][j], board[i][j]);
+						won=false;
+						break search;
+					}
+				}
+			}
+			if(won)
+				repaint();
 		}
 	}
 	public static void main(String[] args) {
@@ -105,13 +124,16 @@ public class Dutch extends JPanel implements MouseMotionListener, MouseListener{
 		int y = e.getY();
 		int c = x/w;
 		int r = y/h;
+		debug(dragged);
 		if(dragged!=null&&c<board[0].length-1&&board[r][c]==null){
-			if(dragged.val=='2'){
-				if(board[dragged.r][0]==null)
+			if(hasLeftOrRight(r, c, dragged)){
+				if(dragged.val=='2'){
+					if(board[dragged.r][0]==null)
+						swap(board, r, c, dragged.r, dragged.c);
+				}
+				else
 					swap(board, r, c, dragged.r, dragged.c);
 			}
-			else
-					swap(board, r, c, dragged.r, dragged.c);
 		}
 		dragged = null;
 		repaint();
@@ -135,13 +157,18 @@ public class Dutch extends JPanel implements MouseMotionListener, MouseListener{
 		int x = e.getX();
 		int y = e.getY();
 		if(dragged!=null){
-			dragged.x = x;
+			// xoff = x;
+			// yoff = y;
 			dragged.y = y;
+			dragged.x = x;
 		}else{
 			int c = x/w;
 			int r = y/h;
 			if(r<board.length&&c<board[0].length-1&&c>=0&&r>=0){
 				dragged = board[r][c];
+				// xoff = x-dragged.x;
+				// debug(x, dragged.x);
+				// yoff = y-dragged.y;
 			}
 		}
 		repaint();
@@ -171,6 +198,32 @@ public class Dutch extends JPanel implements MouseMotionListener, MouseListener{
 			arr[ri][ci].c = ci;
 		}
 		arr[re][ce] = temp;
+	}
+	public void swap(String[][] arr, int ri, int ci, int re, int ce){
+		String temp = arr[ri][ci];
+		arr[ri][ci] = arr[re][ce];
+		arr[re][ce] = temp;
+	}
+	public boolean hasLeftOrRight(int r, int c, Card ca){
+		boolean canMove = true;
+		for(int i = c;i>-1;i--){
+			if(board[r][i]!=null){
+				if(board[r][i].suit!=ca.suit||values.indexOf(board[r][i].val)+1!=values.indexOf(ca.val))
+					canMove = false;
+				break;
+			}
+		}
+		if(!canMove){
+			for(int i = c;i<board[r].length;i++){
+				if(board[r][i]!=null){
+					if(board[r][i].suit==ca.suit&&values.indexOf(board[r][i].val)==1+values.indexOf(ca.val)){
+						canMove = true;
+					}
+					break;
+				}
+			}
+		}
+		return canMove;
 	}
 }
 class Card{
