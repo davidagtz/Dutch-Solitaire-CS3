@@ -6,7 +6,7 @@ import java.awt.image.*;
 import java.io.*;
 import java.awt.event.*;
 
-public class Dutch extends JPanel implements MouseMotionListener, MouseListener{
+public class Dutch extends JPanel implements MouseMotionListener, MouseListener, KeyListener{
 	static final long serialVersionUID = 0L;
 	static String title = "Dutch Solitaire";
 	static String path = "res/";
@@ -25,6 +25,10 @@ public class Dutch extends JPanel implements MouseMotionListener, MouseListener{
 	static int xoff = -1;
 	static int yoff = -1;
 	static boolean won = false;
+	static Point selected = new Point(0,0);
+	static boolean isKeyed = false;
+	static Color trans = new Color(255,0,0,127);
+	static Color select = new Color(0,255,0,127);
 	public Dutch(){
 		try{
 			for(int i=0;i<suits.length;i++){
@@ -54,6 +58,7 @@ public class Dutch extends JPanel implements MouseMotionListener, MouseListener{
 		frame.setResizable(false);
 		frame.getContentPane().addMouseMotionListener(this);
 		frame.getContentPane().addMouseListener(this);
+		frame.addKeyListener(this);
 		setPreferredSize(new Dimension(WIDTH,HEIGHT));
 		frame.add(this);
 		frame.getContentPane().setPreferredSize(new Dimension(WIDTH,HEIGHT));
@@ -98,6 +103,15 @@ public class Dutch extends JPanel implements MouseMotionListener, MouseListener{
 			// }
 			if(null!=dragged){
 				g.drawImage(dragged.img, dragged.x, dragged.y, w, h, null);
+				if(isKeyed){
+					System.out.println("str");
+					g.setColor(select);
+					g.fillRect(dragged.x,dragged.y, w, h);
+				}
+			}
+			g.setColor(trans);
+			if(isKeyed){
+				g.fillRect(selected.x*w, selected.y*h, w, h);
 			}
 			search:
 			for(int i = 0;i<board.length;i++){
@@ -119,10 +133,9 @@ public class Dutch extends JPanel implements MouseMotionListener, MouseListener{
 				repaint();
 		}
 	}
-	public static void main(String[] args) {
-		new Dutch();
-	}
+	public static void main(String[] args) {new Dutch();}
 	public void mouseReleased(MouseEvent e){
+		isKeyed = false;
 		int x = e.getX();
 		int y = e.getY();
 		int c = x/w;
@@ -141,22 +154,58 @@ public class Dutch extends JPanel implements MouseMotionListener, MouseListener{
 		dragged = null;
 		repaint();
 	}
-	public void mouseExited(MouseEvent e){
-		
+	public void keyReleased(KeyEvent e){}
+	public void keyPressed(KeyEvent e){
+		isKeyed = true;
+		switch(e.getKeyCode()){
+			case KeyEvent.VK_LEFT:if(selected.x-1>=0)selected.x-=1; break;
+			case KeyEvent.VK_RIGHT:if(selected.x+1<board[0].length)selected.x+=1; break;
+			case KeyEvent.VK_UP:if(selected.y-1>=0)selected.y-=1; break;
+			case KeyEvent.VK_DOWN:if(selected.y+1<board.length)selected.y+=1; break;
+		}
+		if(e.getKeyCode()==32){
+			if(dragged==null){
+				if(board[selected.y][selected.x]!=null){
+					dragged = board[selected.y][selected.x];
+					dragged.x = selected.x*w;
+					dragged.y = selected.y*h;
+				}
+			}else if(hasLeftOrRight(selected.y, selected.x, dragged)){
+				if(dragged.val=='2'){
+					System.out.println("HI");
+					if(dragged.c!=0){
+						if(board[selected.y][0]==null){
+							swap(board, selected.y, selected.x, dragged.r, dragged.c);
+							dragged = null;
+						}
+					}
+					else if((board[dragged.r][0]==null||board[dragged.r][0].val=='2')&&(board[selected.y][0]==null||board[selected.y][0].val=='2')){
+						swap(board, selected.y, selected.x, dragged.r, dragged.c);
+						dragged = null;
+					}
+				}
+				else{
+					swap(board, selected.y, selected.x, dragged.r, dragged.c);
+					dragged = null;
+				}
+			}
+			else{
+				dragged = null;
+				isKeyed = false;
+			}
+		}
+		else if(e.getKeyCode()==KeyEvent.VK_Q)
+			System.exit(0);
+		repaint();
 	}
-	public void mouseEntered(MouseEvent e){
-	
-	}
-	public void mousePressed(MouseEvent e){
-	
-	}
-	public void mouseClicked(MouseEvent e){
-	
-	}
-	public void mouseMoved(MouseEvent e){
-	
-	}
+	public void keyTyped(KeyEvent e){}
+	public void mouseExited(MouseEvent e){}
+	public void mouseEntered(MouseEvent e){}
+	public void mousePressed(MouseEvent e){}
+	public void mouseClicked(MouseEvent e){}
+	public void mouseMoved(MouseEvent e){}
 	public void mouseDragged(MouseEvent e){
+		isKeyed = false;
 		int x = e.getX();
 		int y = e.getY();
 		if(dragged!=null){
@@ -208,8 +257,10 @@ public class Dutch extends JPanel implements MouseMotionListener, MouseListener{
 		arr[re][ce] = temp;
 	}
 	public boolean hasLeftOrRight(int r, int c, Card ca){
+		if(board[r][c]!=null)
+			return false;
 		boolean canMove = true;
-		for(int i = c;i>-1;i--){
+		for(int i = c-1;i>-1;i--){
 			if(board[r][i]!=null){
 				if(board[r][i].suit!=ca.suit||values.indexOf(board[r][i].val)+1!=values.indexOf(ca.val))
 					canMove = false;
@@ -217,7 +268,7 @@ public class Dutch extends JPanel implements MouseMotionListener, MouseListener{
 			}
 		}
 		if(!canMove){
-			for(int i = c;i<board[r].length;i++){
+			for(int i = c+1;i<board[r].length;i++){
 				if(board[r][i]!=null){
 					if(board[r][i].suit==ca.suit&&values.indexOf(board[r][i].val)==1+values.indexOf(ca.val)){
 						canMove = true;
